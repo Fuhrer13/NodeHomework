@@ -1,0 +1,25 @@
+{
+  "name": "nodehomework1",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node ./index.js",
+    "dev": "nodemon ./index.js "
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Fuhrer13/NodeHomework.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Fuhrer13/NodeHomework/issues"
+  },
+  "homepage": "https://github.com/Fuhrer13/NodeHomework#readme",
+  "dependencies": {
+    "nodemon": "^2.0.4",
+    "yargs": "^15.4.1"
+  }
+}
