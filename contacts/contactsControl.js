@@ -1,81 +1,113 @@
-const path = require('path');
-const fs = require('fs').promises;
+const Joi = require('joi');
+const contactsModel = require('./contactsModel');
+const {
+  Types: { ObjectId },
+} = require('mongoose');
 
-const contactsPath = path.join('db', 'contacts.json');
-
-async function listContacts() {
+async function listContacts(req, res, next) {
   try {
-    const getContactsList = JSON.parse(await fs.readFile(contactsPath, 'utf8'));
-    console.table(getContactsList);
-    return getContactsList;
+    const contactsList = await contactsModel.find();
+    console.table(contactsList);
+    return res.status(200).json(contactsList);
   } catch (error) {
-    console.error('file does not exist', error);
+    next(error);
   }
 }
 
-async function getById(contactId) {
+async function getById(req, res, next) {
   try {
-    const contactsList = JSON.parse(await fs.readFile(contactsPath, 'utf8'));
-    const targetContact = contactsList.find(
-      contact => contact.id === contactId,
-    );
-    return targetContact;
-  } catch (error) {
-    console.log(error);
-  }
-}
+    const contactId = req.params.contactId;
+    const targetContact = await contactsModel.findById(contactId);
 
-async function removeContact(contactId) {
-  try {
-    const contactsList = JSON.parse(await fs.readFile(contactsPath, 'utf8'));
-    const targetContactIndex = contactsList.findIndex(
-      contact => contact.id === contactId,
-    );
-    if (targetContactIndex === -1) {
-      return false;
+    if (!targetContact) {
+      return res.status(404).send();
     }
-    newContactsList = contactsList.filter(contact => contact.id !== contactId);
-    await fs.writeFile(contactsPath, JSON.stringify(newContactsList), 'utf8');
-    console.table(newContactsList);
-    return true;
+    return res.status(200).json(targetContact);
+  } catch (error) {
+    next(error);
+  }
+}
+function validateId(req, res, next) {
+  const id = req.params.contactId;
+  if (!ObjectId.isValid(id)) {
+    return res.status(400).json({ message: 'Invalid ID' });
+  }
+  next();
+}
+
+async function removeContact(req, res, next) {
+  try {
+    const { contactId } = req.params;
+    const removedContact = await contactsModel.findByIdAndDelete(contactId);
+    if (!removedContact) {
+      return res.status(404).send();
+    }
+    return res.status(204).send();
+  } catch (error) {
+    next(error);
+  }
+}
+
+async function addContact(req, res, next) {
+  try {
+    const newContact = await contactsModel.create(req.body);
+    return res.status(201).json(newContact);
+  } catch (error) {
+    next(error);
+  }
+}
+
+function validationAddContact(req, res, next) {
+  const validationRules = Joi.object({
+    name: Joi.string().required(),
+    email: Joi.string().required(),
+    phone: Joi.string().required(),
+    subscription: Joi.string().required(),
+    password: Joi.string().required(),
+    token: Joi.string().allow(''),
+  });
+  const validationResult = validationRules.validate(req.body);
+  if (validationResult.error) {
+    res.status(400).send(validationResult.error);
+  }
+  next();
+}
+
+async function updateContact(req, res, next) {
+  try {
+    const { contactId } = req.params;
+    const updatedContact = await contactsModel.findByIdAndUpdate(
+      contactId,
+      {
+        $set: req.body,
+      },
+      {
+        new: true,
+      },
+    );
+    if (!updatedContact) {
+      return res.status(404).send();
+    }
+    return res.status(204).send();
   } catch (error) {
     console.log(error);
   }
 }
 
-async function addContact(name, email, phone) {
-  try {
-    const contactsList = JSON.parse(await fs.readFile(contactsPath, 'utf8'));
-    const newContact = {
-      id: contactsList.length + 1,
-      name: name,
-      email: email,
-      phone: phone,
-    };
-    newContactsList = [...contactsList, newContact];
-    await fs.writeFile(contactsPath, JSON.stringify(newContactsList), 'utf8');
-    console.table(newContactsList);
-
-    return newContact;
-  } catch (error) {
-    console.log(error);
+function validateUpdateUser(req, res, next) {
+  const validationRules = Joi.object({
+    name: Joi.string(),
+    email: Joi.string(),
+    phone: Joi.string(),
+    subscription: Joi.string(),
+    password: Joi.string(),
+    token: Joi.string().allow(''),
+  });
+  const validationResult = validationRules.validate(req.body);
+  if (validationResult.error) {
+    res.status(400).send(validationResult.error);
   }
-}
-
-async function updateContact(id, body) {
-  try {
-    const contactList = JSON.parse(await fs.readFile(contactsPath, 'utf8'));
-    const targetContact = contactList.find(contact => contact.id === id);
-    const updatedContact = {
-      ...targetContact,
-      ...body,
-    };
-    const newContactsList = [...contactList, updatedContact];
-    await fs.writeFile(contactsPath, JSON.stringify(newContactsList), 'utf8');
-    return updatedContact;
-  } catch (error) {
-    console.log(error);
-  }
+  next();
 }
 
 module.exports = {
@@ -84,4 +116,7 @@ module.exports = {
   removeContact,
   addContact,
   updateContact,
+  validateId,
+  validationAddContact,
+  validateUpdateUser,
 };
