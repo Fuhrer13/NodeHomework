@@ -1,5 +1,5 @@
 {
-  "name": "nodehomework1",
+  "name": "nodehomework2",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
@@ -19,6 +19,13 @@
   },
   "homepage": "https://github.com/Fuhrer13/NodeHomework#readme",
   "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^8.2.0",
+    "express": "^4.17.1",
+    "joi": "^17.2.0",
+    "mongodb": "^3.6.0",
+    "mongoose": "^5.9.28",
+    "morgan": "^1.10.0",
     "nodemon": "^2.0.4",
     "yargs": "^15.4.1"
   }
